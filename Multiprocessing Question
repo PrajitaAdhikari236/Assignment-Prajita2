@@ -1,0 +1,79 @@
+
+import pandas as pd
+import random
+import multiprocessing
+from multiprocessing import Process, Manager
+import time
+
+
+def generate_large_dataset():
+    num_rows = 1000000
+
+    data = {
+        'ID': range(1, num_rows + 1),
+
+        'Number': [random.randint(1, 1_000_000) for _ in range(num_rows)]
+    }
+    df = pd.DataFrame(data)
+
+    df.to_csv("large_numbers.csv", index=False)
+    print("Dataset 'large_numbers.csv' generated successfully.")
+
+if __name__ == "__main__":
+    generate_large_dataset()
+
+def process_chunk(start, end, result_dict):
+    df = pd.read_csv("large_numbers.csv", skiprows=start, nrows=(end - start), names=["ID", "Number"], header=0)
+    numbers = df["Number"]
+
+    result = {
+        "sum": numbers.sum(),
+        "max": numbers.max(),
+        "min": numbers.min(),
+        "even_count": (numbers % 2 == 0).sum(),
+        "odd_count": (numbers % 2 == 1).sum()
+    }
+    result_dict[start] = result
+
+
+def compute_statistics():
+    num_processes = multiprocessing.cpu_count()
+    chunk_size = 1000000 // num_processes
+    manager = multiprocessing.Manager()
+    result_dict = manager.dict()
+    processes = []
+
+
+    for i in range(num_processes):
+        start = i * chunk_size + 1
+        end = start + chunk_size
+        process = multiprocessing.Process(target=process_chunk, args=(start, end, result_dict))
+        processes.append(process)
+        process.start()
+
+
+    for process in processes:
+        process.join()
+
+
+    total_sum = sum(res["sum"] for res in result_dict.values())
+    max_value = max(res["max"] for res in result_dict.values())
+    min_value = min(res["min"] for res in result_dict.values())
+    even_count = sum(res["even_count"] for res in result_dict.values())
+    odd_count = sum(res["odd_count"] for res in result_dict.values())
+
+    print(f"Total Sum: {total_sum}")
+    print(f"Max Value: {max_value}")
+    print(f"Min Value: {min_value}")
+    print(f"Even Count: {even_count}")
+    print(f"Odd Count: {odd_count}")
+
+
+if __name__ == "__main__":
+    generate_large_dataset()
+    compute_statistics()
+    print(Manager)
+
+
+
+
