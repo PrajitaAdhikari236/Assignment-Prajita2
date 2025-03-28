@@ -1,0 +1,42 @@
+import pandas as pd
+
+df = pd.read_csv(r'C:\Users\Lenovo\Downloads\dataset1.csv')
+print(df.head())
+
+# 1 highest level of rating
+category_rating = df.groupby('Category')['Rating'].mean()
+highest_rating = category_rating.idxmax()
+print(f"The category with the highest average rating is: {highest_rating}")
+
+#2 Find the total stock available for each category.
+total_stock = df.groupby('Category')['Stock'].sum()
+print("Total stock available per category")
+print(total_stock)
+
+#3. Create a new column Final_Price where Final_Price = Price - (Price * Discount / 100).
+
+df['Final_Price'] = df['Price'] - (df['Price'] * df['Discount'] / 100)
+print(" Final_Price column")
+print(df[['Product_ID', 'Category', 'Price', 'Discount', 'Final_Price']])
+
+
+#4. Find the top 3 most discounted products.
+df['DiscountAmount'] = df['Price'] * df['Discount'] / 100
+top3_Discount = df.nlargest(3, 'DiscountAmount')[['Product_ID', 'Category', 'DiscountAmount', 'Price']]
+print("Top 3 most discounted products:")
+print(top3_Discount)
+
+#5. Find the supplier with the highest average price of products.
+AvgPrice = df.groupby('Supplier')['Price'].mean()
+Highest_AvgPrice = AvgPrice.idxmax()
+print(f"The supplier with the highest average price of products is: {Highest_AvgPrice}")
+
+
+#6. ind the total number of unique suppliers.
+UniqueSupp = df['Supplier'].nunique()
+print(f"Total number of unique suppliers: {UniqueSupp}")
+
+
+
+
+
