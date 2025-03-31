@@ -1,0 +1,27 @@
+
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import col, lit, concat, lag
+from pyspark.sql.window import Window
+
+
+spark = SparkSession.builder.appName("DataProcessing").getOrCreate()
+
+# 1) Read the Input_data CSV file into pyspark dataframe using.
+
+df_input = spark.read.csv(r'C:\Users\Lenovo\Downloads\Input_data.csv',
+                        header=True, inferSchema=True, quote='"')
+
+
+# 2) Create a new dataframe "df_out" by adding new column "Web_TREE" as shown in the output_data sheet.
+
+window_spec = Window.partitionBy("BRAND_ID").orderBy("PARENT_CATEGORY_ID")
+df_out = df_input.withColumn("collected_ids", collect_list("PARENT_CATEGORY_ID").over(window_spec))
+df_out = df_out.withColumn("Web_TREE", concat_ws("_", col("collected_ids")))
+
+df_out.show(1000, truncate=False)
+
+# 3) Write the "df_out" dataframe as JSON file in "./out/json" directory.
+df_out.write.json(r"C:\Users\Lenovo\Downloads\Out\Jason")
+
+#4) Write the "df_out" dataframe as Parquet file in "./out/json" directory.
+df_out.write.parquet(r"C:\Users\Lenovo\Downloads\Out\Parquet")
